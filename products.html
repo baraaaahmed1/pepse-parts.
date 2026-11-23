@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>كتالوج قطع الغيار | PEPSE PARTS</title>
+    <meta name="description" content="استكشف كتالوج شاشات LCD والبطاريات من PEPSE PARTS، واعرف السعر الموحد واطلب الصنف مباشرة." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="scroll-progress" aria-hidden="true"></div>
+    <div class="topbar">
+      <div class="container topbar-content">
+        <div class="topbar-item"><i>🚚</i> شحن إلى جميع محافظات مصر</div>
+      </div>
+    </div>
+
+    <header>
+      <div class="container nav">
+        <a class="logo" href="pag2.html" aria-label="العودة إلى الرئيسية">
+          <div class="logo-mark">
+            <img src="WhatsApp%20Image%202026-10-11%20at%202.39.20%20PM.jpeg" alt="شعار PEPSE PARTS" />
+          </div>
+          <span>PEPSE PARTS</span>
+        </a>
+
+        <nav class="nav-links" aria-label="التنقل الرئيسي">
+          <a href="pag2.html">الرئيسية</a>
+          <a class="active" href="products.html">المنتجات</a>
+          <a href="/#about">لماذا PEPSE PARTS؟</a>
+          <a href="/#contact">تواصل معنا</a>
+        </nav>
+
+        <div class="nav-actions">
+          <button class="cart-trigger" id="cartOpenButton" type="button" aria-label="فتح عربة التسوق" aria-haspopup="dialog">
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+              <path d="M3 4h2l2.1 10.1a2 2 0 0 0 2 1.6h8.2a2 2 0 0 0 1.9-1.4L21 8H6" />
+              <circle cx="10" cy="20" r="1.3" />
+              <circle cx="18" cy="20" r="1.3" />
+            </svg>
+            <span class="cart-count" id="cartCount" aria-live="polite">0</span>
+          </button>
+          <button class="mobile-btn" aria-label="فتح القائمة" aria-expanded="false">☰</button>
+        </div>
+      </div>
+    </header>
+
+    <div class="quick-actions-bar" aria-label="أزرار الوصول السريع">
+      <div class="container quick-actions-grid">
+        <a class="quick-action" href="pag2.html">الرئيسية</a>
+        <a class="quick-action market-shortage-link" href="products.html?quality=market-shortages">🔥 نواقص السوق</a>
+        <a class="quick-action" href="/#contact" data-contact-dialog-trigger>تواصل معنا</a>
+        <button class="quick-action primary" type="button" id="cartQuickOpenButton" data-order-trigger>اطلب الآن</button>
+      </div>
+    </div>
+
+    <main id="home">
+      <section id="catalog">
+        <div class="container">
+          <div class="section-heading">
+            <div>
+              <span class="eyebrow" id="catalogEyebrow" style="background: #fff7ed; color: var(--secondary); border-color: rgba(249,115,22,0.15);">كتالوج المنتجات</span>
+              <h1>كتالوج شاشات LCD والبطاريات</h1>
+            </div>
+            <p id="catalogCount" aria-live="polite">جاري تحميل الأصناف...</p>
+          </div>
+
+          <div id="catalogView">
+            <div class="catalog-toolbar">
+              <label class="catalog-search" for="catalogSearch">
+                <span>ابحث باسم المنتج أو رقم الموديل</span>
+                <input id="catalogSearch" type="search" placeholder="مثال: A15 أو آيفون 13" autocomplete="off" />
+              </label>
+              <label class="catalog-sort" for="catalogSort">
+                <span>فرز المنتجات</span>
+                <select id="catalogSort">
+                  <option value="asc">الاسم (أبجديًا تصاعديًا)</option>
+                  <option value="desc">الاسم (أبجديًا تنازليًا)</option>
+                </select>
+              </label>
+            </div>
+
+            <div id="catalogSuggestions" class="catalog-suggestions" role="region" aria-label="مقترحات البحث" hidden></div>
+
+            <div class="quality-filter-group">
+              <span class="quality-filter-label">فلاتر إضافية حسب الوصف</span>
+              <div id="qualityFilters" class="quality-filters" role="group" aria-label="تصنيفات المنتجات"></div>
+              <small class="quality-filter-note">قد يظهر الصنف في أكثر من تصنيف إذا احتوى اسمه على أكثر من وصف.</small>
+            </div>
+
+            <div id="catalogGrid" class="products-grid catalog-grid" aria-live="polite"></div>
+            <p id="catalogCartStatus" class="form-status" role="status" aria-live="polite"></p>
+            <p id="catalogEmpty" class="catalog-empty" hidden>لا توجد منتجات تطابق كلمات البحث.</p>
+            <div id="catalogPagination" class="catalog-pagination" hidden>
+              <button id="catalogPrevious" class="btn btn-secondary" type="button">السابق</button>
+              <span id="catalogPage" aria-live="polite"></span>
+              <button id="catalogNext" class="btn btn-secondary" type="button">التالي</button>
+            </div>
+          </div>
+
+          <article class="product-detail" id="productDetail" hidden>
+            <div class="product-detail-image">
+              <img src="lcd-placeholder.svg" alt="صورة توضيحية للصنف" />
+            </div>
+            <div class="product-detail-info">
+              <a class="product-back-link" href="products.html">العودة إلى الكتالوج</a>
+              <span class="product-type-label" id="productTypeLabel">شاشة LCD</span>
+              <h2 id="productDetailName"></h2>
+              <p id="productDetailPrice" class="catalog-price product-detail-price"></p>
+              <p id="productMaxQuantity" class="product-limit-note"></p>
+              <p>اختر الكمية المطلوبة، ثم أضف الصنف إلى عربة التسوق. السعر موحد، والتوافر النهائي يؤكده فريق المبيعات.</p>
+              <a class="product-image-request" id="productImageRequest" href="https://wa.me/201286664149" target="_blank" rel="noopener noreferrer">اطلب صورة الصنف عبر واتساب</a>
+              <a class="product-image-request" id="productPriceRequest" href="https://wa.me/201286664149" target="_blank" rel="noopener noreferrer">راجع السعر مع المبيعات عبر واتساب</a>
+              <div class="quantity-field">
+                <label for="productQuantity">الكمية المطلوبة</label>
+                <div class="quantity-control">
+                  <button type="button" id="productQuantityMinus" aria-label="تقليل الكمية">−</button>
+                  <input id="productQuantity" type="number" min="1" step="1" value="1" inputmode="numeric" />
+                  <button type="button" id="productQuantityPlus" aria-label="زيادة الكمية">+</button>
+                </div>
+              </div>
+              <button class="btn btn-primary product-add-button" id="addToCartButton" type="button">أضف إلى العربة</button>
+              <p id="productCartStatus" class="form-status" role="status" aria-live="polite"></p>
+            </div>
+          </article>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="container">
+        <div class="footer-grid">
+          <div class="footer-brand footer-col">
+            <div class="logo" style="color: white;">
+              <div class="logo-mark"><img src="WhatsApp%20Image%202026-10-11%20at%202.39.20%20PM.jpeg" alt="شعار PEPSE PARTS" /></div>
+              <span>PEPSE PARTS</span>
+            </div>
+            <p>توريد قطع غيار الهواتف المحمولة للتجار، مع متابعة ما بعد البيع وتنسيق المرتجعات.</p>
+          </div>
+
+          <div class="footer-col">
+            <h4>تواصل مع PEPSE PARTS</h4>
+            <ul>
+              <li>01286664149</li>
+              <li>العتبة - شارع محمد علي، عمارة أبو الجوخ، الدور الثالث</li>
+              <li>يوميًا من 12:00 ظهرًا حتى منتصف الليل، عدا الأحد</li>
+              <li><a href="mailto:pepsiparts448@gmail.com">pepsiparts448@gmail.com</a></li>
+              <li>
+                <a class="facebook-link" href="https://www.facebook.com/share/1DmRJ8jmZ3/" target="_blank" rel="noopener noreferrer">
+                  <span aria-hidden="true">f</span> صفحتنا على فيسبوك
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="footer-bottom">
+          <span>© <span id="year"></span> جميع الحقوق محفوظة لـ PEPSE PARTS</span>
+          <a href="pag2.html">العودة إلى الرئيسية</a>
+        </div>
+      </div>
+    </footer>
+
+    <a class="floating-whatsapp" href="https://wa.me/201286664149" target="_blank" rel="noopener noreferrer" aria-label="تواصل عبر واتساب"></a>
+
+    <dialog class="cart-dialog" id="cartDialog" aria-labelledby="cartDialogTitle">
+      <div class="cart-dialog-content">
+        <div class="cart-dialog-header">
+          <div>
+            <span class="eyebrow">قائمة مشترياتك</span>
+            <h2 id="cartDialogTitle">عربة التسوق</h2>
+          </div>
+          <button class="contact-dialog-close" id="cartCloseButton" type="button" aria-label="إغلاق عربة التسوق">×</button>
+        </div>
+        <p id="cartEmpty" class="cart-empty">لم تضف منتجات إلى العربة بعد.</p>
+        <div class="cart-items" id="cartItems"></div>
+        <div class="cart-dialog-footer">
+          <div class="cart-total"><span>إجمالي القطع</span><strong id="cartTotalQuantity">0</strong></div>
+          <div class="cart-total"><span>الإجمالي بالسعر الموحد</span><strong id="cartTotalPrice">0 جنيه</strong></div>
+          <div id="cartCheckoutActions">
+            <p class="order-price-note">الأسعار موحدة، والتوافر ومصاريف الشحن النهائية يؤكدهما فريق المبيعات.</p>
+            <button class="btn btn-primary" id="checkoutStartButton" type="button" disabled>إتمام الطلب</button>
+          </div>
+          <form id="checkoutForm" class="checkout-form" hidden>
+            <label class="cart-customer-field">
+              <span>اسم المحل أو المتجر</span>
+              <input id="cartShopName" name="shopName" type="text" maxlength="120" autocomplete="organization" required />
+            </label>
+            <label class="cart-customer-field">
+              <span>رقم الهاتف للتواصل</span>
+              <input id="cartPhone" name="phone" type="tel" maxlength="40" autocomplete="tel" required />
+            </label>
+            <fieldset class="fulfillment-method-options">
+              <legend>طريقة الاستلام</legend>
+              <label>
+                <input type="radio" name="fulfillmentMethod" value="shipping" checked />
+                <span>شحن</span>
+              </label>
+              <label>
+                <input type="radio" name="fulfillmentMethod" value="pickup" />
+                <span>استلام من المحل</span>
+              </label>
+            </fieldset>
+            <div id="storePickupDetails" class="payment-instructions pickup-instructions" hidden>
+              <strong>عنوان الاستلام من المحل</strong>
+              <span>العتبة - شارع محمد علي، عمارة أبو الجوخ، الدور الثالث</span>
+            </div>
+            <label class="cart-customer-field shipping-order-field" data-shipping-required="true">
+              <span>شركة الشحن</span>
+              <input id="cartShippingCompany" name="shippingCompany" type="text" maxlength="120" autocomplete="organization" placeholder="اكتب اسم شركة الشحن" required />
+            </label>
+            <label class="cart-customer-field shipping-order-field" data-shipping-required="true">
+              <span>المحافظة</span>
+              <select id="cartGovernorate" name="governorate" required>
+                <option value="" selected disabled>اختر المحافظة</option>
+                <option>القاهرة</option>
+                <option>الجيزة</option>
+                <option>الإسكندرية</option>
+                <option>القليوبية</option>
+                <option>البحيرة</option>
+                <option>مطروح</option>
+                <option>دمياط</option>
+                <option>الدقهلية</option>
+                <option>كفر الشيخ</option>
+                <option>الغربية</option>
+                <option>المنوفية</option>
+                <option>الشرقية</option>
+                <option>الإسماعيلية</option>
+                <option>بورسعيد</option>
+                <option>السويس</option>
+                <option>شمال سيناء</option>
+                <option>جنوب سيناء</option>
+                <option>بني سويف</option>
+                <option>الفيوم</option>
+                <option>المنيا</option>
+                <option>أسيوط</option>
+                <option>الوادي الجديد</option>
+                <option>سوهاج</option>
+                <option>قنا</option>
+                <option>الأقصر</option>
+                <option>أسوان</option>
+                <option>البحر الأحمر</option>
+              </select>
+            </label>
+            <label class="cart-customer-field shipping-order-field" data-shipping-required="true">
+              <span>العنوان بالتفصيل</span>
+              <textarea id="cartAddress" name="address" maxlength="500" rows="3" autocomplete="street-address" required></textarea>
+            </label>
+            <label class="cart-customer-field shipping-order-field">
+              <span>علامة مميزة (اختياري)</span>
+              <input id="cartLandmark" name="landmark" type="text" maxlength="160" />
+            </label>
+            <fieldset class="payment-method-options">
+              <legend>طريقة الدفع</legend>
+              <label>
+                <input type="radio" name="paymentMethod" value="cash_on_delivery" checked />
+                <span>الدفع عند الاستلام</span>
+              </label>
+              <label>
+                <input type="radio" name="paymentMethod" value="instapay" />
+                <img class="payment-method-icon" src="instapay-icon.svg" alt="" aria-hidden="true" />
+                <span>تحويل إنستا باي يدوي</span>
+              </label>
+              <label>
+                <input type="radio" name="paymentMethod" value="wallet_transfer" />
+                <img class="payment-method-icon" src="wallet-icon.svg" alt="" aria-hidden="true" />
+                <span>تحويل محفظة إلكترونية</span>
+              </label>
+            </fieldset>
+            <div id="instapayPaymentDetails" class="payment-instructions" hidden>
+              <strong>بيانات التحويل عبر إنستا باي</strong>
+              <span>اسم المستفيد: أمجد محمود محمد</span>
+              <span>البنك: البنك التجاري الدولي (CIB)</span>
+              <span>رقم الحساب: <bdi dir="ltr">100070563945</bdi></span>
+              <small>أرسل صورة التحويل للمبيعات عبر واتساب. يظل الطلب بانتظار مراجعة التحويل.</small>
+            </div>
+            <p id="paymentMethodNote" class="order-price-note" role="status" aria-live="polite"></p>
+            <p id="fulfillmentMethodNote" class="order-price-note" role="status" aria-live="polite"></p>
+            <p class="order-price-note">السعر أو التوافر النهائي قد يحتاجان إلى تأكيد المبيعات.</p>
+            <div class="checkout-actions">
+              <button class="btn btn-secondary" id="checkoutBackButton" type="button">الرجوع إلى العربة</button>
+              <button class="btn btn-primary" id="sendCartButton" type="submit" disabled>متابعة إلى واتساب</button>
+            </div>
+          </form>
+          <p id="cartOrderStatus" class="form-status" role="status" aria-live="polite"></p>
+        </div>
+      </div>
+    </dialog>
+
+    <button class="back-to-top" type="button" aria-label="العودة إلى الأعلى">↑</button>
+    <script src="products.js"></script>
+    <script src="script.js"></script>
+  </body>
+</html>

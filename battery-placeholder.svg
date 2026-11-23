@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" role="img" aria-labelledby="title description">
+  <title id="title">صورة توضيحية لبطارية هاتف</title>
+  <desc id="description">رسم توضيحي لبطارية هاتف محمول</desc>
+  <rect width="640" height="480" rx="28" fill="#edf3f9"/>
+  <rect x="210" y="106" width="220" height="270" rx="28" fill="#fff" stroke="#1b2b4a" stroke-width="12"/>
+  <path d="M280 88h80v24h-80z" rx="8" fill="#1b2b4a"/>
+  <path d="m348 164-76 92h50l-27 66 83-104h-52z" fill="#f97316"/>
+  <path d="M246 342h148" stroke="#d7e1ed" stroke-width="10" stroke-linecap="round"/>
+</svg>

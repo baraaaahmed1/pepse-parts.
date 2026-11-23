@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>إدارة الطلبات | PEPSE PARTS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .admin-page { padding: 36px 0 64px; }
+      .admin-panel { padding: 24px; border: 1px solid rgba(148, 163, 184, .2); border-radius: 18px; background: #fff; box-shadow: var(--shadow); }
+      .admin-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+      .admin-heading h1 { margin: 0; font-size: 1.6rem; }
+      .admin-login { display: grid; grid-template-columns: 1fr 1fr auto; align-items: end; gap: 12px; max-width: 760px; }
+      .admin-login label { display: grid; gap: 5px; color: var(--muted); }
+      .admin-login input { padding: 10px 12px; }
+      .admin-table-wrap { overflow-x: auto; }
+      .admin-table { width: 100%; border-collapse: collapse; min-width: 760px; }
+      .admin-table th, .admin-table td { padding: 12px 10px; border-bottom: 1px solid #e8edf5; text-align: right; vertical-align: top; white-space: pre-line; }
+      .admin-table th { color: var(--muted); white-space: nowrap; }
+      .admin-table select { padding: 7px; border: 1px solid #d5deeb; border-radius: 8px; background: #fff; font: inherit; }
+      .admin-items { margin: 0; padding-right: 18px; }
+      .admin-status { min-height: 1.6em; margin: 12px 0 0; color: var(--muted); }
+      .admin-empty { padding: 28px 8px; color: var(--muted); text-align: center; }
+      .catalog-upload-panel { display: grid; gap: 12px; margin: 20px 0; padding: 18px; border: 1px solid #dfe6f1; border-radius: 14px; background: #f8fafc; }
+      .catalog-upload-panel[hidden] { display: none; }
+      .catalog-upload-panel form { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 12px; }
+      .catalog-upload-panel label { display: grid; gap: 6px; color: var(--muted); }
+      .catalog-upload-panel input[type="file"] { min-height: 42px; }
+      @media (max-width: 640px) {
+        .admin-panel { padding: 16px; }
+        .admin-heading { align-items: flex-start; flex-direction: column; }
+        .admin-login { grid-template-columns: 1fr; }
+        .catalog-upload-panel form { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="container admin-page">
+      <section class="admin-panel">
+        <div class="admin-heading">
+          <div>
+            <span class="eyebrow">PEPSE PARTS</span>
+            <h1>إدارة الطلبات والرسائل</h1>
+          </div>
+          <div>
+            <button class="btn btn-secondary" id="refreshOrders" type="button" hidden>تحديث القائمة</button>
+            <a class="btn btn-secondary" href="products.html">العودة إلى الموقع</a>
+          </div>
+        </div>
+        <form class="admin-login" id="adminLogin">
+          <label>
+            اسم المستخدم
+            <input id="adminUsername" type="text" value="admin" autocomplete="username" required />
+          </label>
+          <label>
+            كلمة المرور
+            <input id="adminPassword" type="password" autocomplete="current-password" required />
+          </label>
+          <button class="btn btn-primary" type="submit">عرض الطلبات</button>
+        </form>
+        <p class="admin-status" id="adminStatus" role="status" aria-live="polite"></p>
+        <section class="catalog-upload-panel" id="catalogUploadPanel" hidden>
+          <strong>تحديث ملف الكتالوج والكميات</strong>
+          <small>ارفع نسخة Excel جديدة بصيغة XLSX بنفس أعمدة الملف الحالي. يُحفظ الملف القديم تلقائيًا كنسخة احتياطية قبل التطبيق.</small>
+          <form id="catalogUploadForm">
+            <label>
+              ملف الكتالوج الجديد
+              <input id="catalogUploadFile" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" required />
+            </label>
+            <button class="btn btn-primary" type="submit">رفع وتطبيق التحديث</button>
+          </form>
+          <p class="admin-status" id="catalogUploadStatus" role="status" aria-live="polite"></p>
+        </section>
+        <div class="admin-table-wrap">
+          <table class="admin-table" id="ordersTable" hidden>
+            <thead>
+              <tr>
+                <th>رقم / التاريخ</th>
+                <th>النوع</th>
+                <th>المحل والتواصل</th>
+                <th>التفاصيل / الأصناف</th>
+                <th>طريقة الدفع والتحصيل</th>
+                <th>الحالة</th>
+              </tr>
+            </thead>
+            <tbody id="ordersBody"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+    <script src="admin.js"></script>
+  </body>
+</html>

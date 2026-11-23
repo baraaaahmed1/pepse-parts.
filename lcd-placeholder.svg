@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 420" role="img" aria-label="واجهة شاشة هاتف وظهرها مع فلاتة التوصيل">
+  <defs>
+    <linearGradient id="glass" x1="0" y1="0" x2="0.9" y2="1">
+      <stop offset="0" stop-color="#202a36"/>
+      <stop offset="1" stop-color="#05080d"/>
+    </linearGradient>
+    <linearGradient id="backplate" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#e1cda8"/>
+      <stop offset="1" stop-color="#b79568"/>
+    </linearGradient>
+    <filter id="shadow" x="-25%" y="-15%" width="150%" height="145%">
+      <feDropShadow dx="0" dy="10" stdDeviation="10" flood-color="#1b2735" flood-opacity=".16"/>
+    </filter>
+  </defs>
+  <rect width="640" height="420" rx="22" fill="#f5f6f7"/>
+  <g filter="url(#shadow)" transform="translate(122 30)">
+    <rect x="0" y="0" width="172" height="322" rx="19" fill="#12171d"/>
+    <rect x="6" y="6" width="160" height="310" rx="15" fill="url(#glass)"/>
+    <rect x="69" y="12" width="34" height="4" rx="2" fill="#68727d"/>
+    <circle cx="112" cy="14" r="2" fill="#3e4853"/>
+    <path d="M80 322v22h-16v11h88v-11h-15v-22" fill="#242a30"/>
+    <path d="M64 355h88v8H64z" fill="#d5a74e"/>
+    <path d="M73 355v8m10-8v8m10-8v8m10-8v8m10-8v8m10-8v8m10-8v8m10-8v8" stroke="#473921" stroke-width="2"/>
+  </g>
+  <g filter="url(#shadow)" transform="translate(350 30)">
+    <rect x="0" y="0" width="172" height="322" rx="19" fill="#15191e"/>
+    <rect x="6" y="6" width="160" height="310" rx="15" fill="url(#backplate)"/>
+    <path d="M67 316v16h-9v17h58v-17h-9v-16" fill="#1d2228"/>
+    <path d="M58 348h58v13H58z" fill="#c39243"/>
+    <path d="M65 348v13m8-13v13m8-13v13m8-13v13m8-13v13m8-13v13m8-13v13" stroke="#3d3021" stroke-width="2"/>
+    <rect x="78" y="323" width="37" height="18" rx="3" fill="#252a30"/>
+    <path d="M85 327h22m-22 5h16" stroke="#8d969e" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="55" cy="333" r="5" fill="#d3a342"/>
+    <circle cx="129" cy="333" r="5" fill="#d3a342"/>
+  </g>
+</svg>
