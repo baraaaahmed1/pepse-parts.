@@ -1,0 +1,25 @@
+{
+  "name": "pepsi-parts",
+  "version": "1.0.0",
+  "description": "PEPSI PARTS storefront with WhatsApp order backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --env-file-if-exists=.env.local server.js"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "dependencies": {
+    "@vercel/blob": "^2.9.0",
+    "exceljs": "^4.4.0",
+    "express": "^4.19.2",
+    "jszip": "^3.10.1",
+    "multer": "^2.5.0"
+  },
+  "overrides": {
+    "zod": "^4.6.7",
+    "exceljs": {
+      "uuid": "^11.1.1"
+    }
+  }
+}
