@@ -306,35 +306,23 @@ function buildCatalogImageMap(catalog) {
   const imageMap = new Map();
   if (!fs.existsSync(LCD_IMAGE_DIR)) return imageMap;
 
-  const imageAliases = {
-    '9A 9C OR NEW': [/9a/i, /or\s*new/i],
-    'A15 C11 C12 OR NEW': [/A15/i, /OR\s*NEW/i],
-    'A17 A18 A38 A58 A57 OR NEW': [/A17/i, /OR\s*NEW/i],
-    'A17 A57 A58 A18 jt': [/A17/i, /JT/i],
-    'C21y C25y OR NEW': [/C21Y/i, /OR\s*NEW/i],
-    'C30 C30s C31 C33 C33s OR NEW': [/C30/i, /OR\s*NEW/i],
-    'C51 C53 OR NEW': [/C53/i, /OR\s*NEW/i],
-    'F11 A9 A9x OR NEW': [/F11/i, /OR\s*NEW/i],
-    'Mi 9t Poco M3 OR NEW': [/POCO\s*M3/i, /OR\s*NEW/i],
-    'mi 9t pocom3 jt': [/POCO\s*M3|REDMI\s*9T/i, /JT/i],
-    'Note 10s vip': [/NOTE\s*10S/i, /VIP/i],
-    'Note 11 4g vip': [/NOTE\s*11/i, /VIP/i],
-    'Note 7 OR NEW': [/NOTE\s*7/i, /OR\s*NEW/i],
-    'Realme 3 pro OR NEW': [/REALME\s*3/i, /OR\s*NEW/i],
-    'Redmi 10 4g OR NEW': [/RM\s*10|REDMI\s*10/i, /OR\s*NEW/i],
-    'Redmi 14c OR NEW': [/14C/i, /OR\s*NEW/i],
-    'Redmi 15c jt': [/15C/i, /JT/i],
-    'Redmi 15c OR NEW': [/15C/i, /OR\s*NEW/i],
-    'Redmi A3 jt': [/A3|MI\s*A3/i, /JT/i],
-    'Redmi Note 9 OR NEW': [/NOTE\s*9/i, /OR\s*NEW/i],
-    'Redmi note 9s OR NEW': [/NOTE\s*9S/i, /OR\s*NEW/i],
-    'Redmia 9A 9C jt': [/9A|9C/i, /JT/i],
-    'Y11 Y12 OR NEW': [/Y11/i, /OR\s*NEW/i],
-    'Y15 Y90 Y93 OR NEW': [/Y15/i, /OR\s*NEW/i],
-    'Y20 Y12s OR NEW': [/Y20/i, /OR\s*NEW/i],
-    'Y22 Y22s Y17s OR NEW': [/Y22/i, /OR\s*NEW/i],
-    'Y33s Y53s OR NEW': [/Y33S/i, /OR\s*NEW/i],
-  };
+  const normalizeText = (value) =>
+    String(value || '')
+      .toLocaleLowerCase()
+      .replace(/[أإآ]/g, 'ا')
+      .replace(/ى/g, 'ي')
+      .replace(/100\s*%/g, ' ')
+      .replace(/[^a-z0-9\u0600-\u06ff+]+/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const extractModelTokens = (value) =>
+    normalizeText(value)
+      .replace(/\b(lcd|org|new|jt|vip|or|the|plus|incell|oled|hd|copy|توكيل|سيلفر|اورنج|خلع|باغه|باغة|فرام|بفرام)\b/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .split(' ')
+      .filter((t) => t.length >= 2);
 
   const imageFiles = fs.readdirSync(LCD_IMAGE_DIR).filter((file) =>
     /\.(?:jpe?g|png|webp)$/i.test(file)
@@ -342,125 +330,51 @@ function buildCatalogImageMap(catalog) {
 
   for (const imageFile of imageFiles) {
     const stem = path.parse(imageFile).name;
-    if (/^C51 C53 jt$/i.test(stem) || /^Y33s OR NEW$/i.test(stem)) {
-      for (const name of catalog.keys()) {
-        if (/^C51 C53 jt$/i.test(stem) && /C51/i.test(name) && /C53/i.test(name) && /JT/i.test(name)) {
-          imageMap.set(name, `/lcd-images/${encodeURIComponent(imageFile)}`);
-        }
-        if (/^Y33s OR NEW$/i.test(stem) && /Y33S/i.test(name) && /OR\s*NEW/i.test(name)) {
-          imageMap.set(name, `/lcd-images/${encodeURIComponent(imageFile)}`);
-        }
-      }
-      continue;
-    }
-
-    const exactImageNames = {
-      'A15 C11 C12 OR NEW': ['Lcd A15 OR NEW', 'Lcd C11 2021 OR NEW'],
-      'C51 C53 jt': ['Lcd C51\\c53\\note 50 jt 100%'],
-      'F11 A9 A9x OR NEW': ['Lcd F11 Org New', 'Lcd F11 PRO OR NEW'],
-      'Redmi 14c OR NEW': ['Lcd Mi 14c OrG NEW'],
-      'Y11 Y12 OR NEW': ['Lcd VIVO Y11 / Y12 / Y15 / Y17 aa', 'Lcd Y11 OR NEW'],
-      'Y33s OR NEW': ['Lcd Y33S OR NEW'],
-    };
-    if (exactImageNames[stem]) {
-      for (const name of exactImageNames[stem]) {
-        if (catalog.has(name)) {
-          imageMap.set(name, `/lcd-images/${encodeURIComponent(imageFile)}`);
-        }
-      }
-      continue;
-    }
-
-    const exactPriority = {
-      'A15 C11 C12 OR NEW': [/A15/i, /OR\s*NEW/i],
-      'C51 C53 jt': [/C51/i, /C53/i, /JT/i],
-      'F11 A9 A9x OR NEW': [/F11/i, /OR\s*NEW/i],
-      'A15 OR NEW': [/^Lcd A15 OR NEW$/i],
-      'F11 pro OR NEW': [/F11\s*PRO/i, /OR\s*NEW/i],
-      'Redmi 14c OR NEW': [/14C/i, /OR\s*NEW/i],
-      'Redmi note 9s OR NEW': [/NOTE\s*9S/i, /OR\s*NEW/i],
-      'Y15 Y90 Y93 OR NEW': [/Y15/i],
-      'Y33s Y53s OR NEW': [/Y33S/i, /OR\s*NEW/i],
-      'Y33s OR NEW': [/Y33S/i, /OR\s*NEW/i],
-    }[stem];
-    if (exactPriority) {
-      for (const name of catalog.keys()) {
-        if (exactPriority.every((pattern) => pattern.test(name))) {
-          imageMap.set(name, `/lcd-images/${encodeURIComponent(imageFile)}`);
-        }
-      }
-      continue;
-    }
-
-    const exactStemTokens = normalizeImageModel(stem).split(' ').filter(Boolean);
-    const exactCandidates = [];
-    for (const name of catalog.keys()) {
-      if (/بطاريه|battery/i.test(name)) continue;
-      const nameTokens = normalizeImageModel(name).split(' ').filter(Boolean);
-      if (exactStemTokens.length > 0 &&
-        exactStemTokens.every((token) =>
-          nameTokens.includes(token) ||
-          (token.length >= 4 && nameTokens.some((nameToken) => nameToken.startsWith(token)))
-        )) {
-        exactCandidates.push(name);
-      }
-    }
-    if (exactCandidates.length === 1) {
-      imageMap.set(exactCandidates[0], `/lcd-images/${encodeURIComponent(imageFile)}`);
-      continue;
-    }
-
-    const aliasPatterns = imageAliases[stem];
-    if (aliasPatterns) {
-      for (const name of catalog.keys()) {
-        if (aliasPatterns.every((pattern) => pattern.test(name))) {
-          if (!imageMap.has(name)) imageMap.set(name, `/lcd-images/${encodeURIComponent(imageFile)}`);
-        }
-      }
-      continue;
-    }
     const imageQuality = getImageQuality(stem);
-    const stemTokens = normalizeImageModel(stem).split(' ').filter(Boolean);
+    const stemTokens = extractModelTokens(stem);
     if (stemTokens.length === 0) continue;
 
     const candidates = [];
     for (const name of catalog.keys()) {
-      if (/بطاريه|battery/i.test(name)) continue;
-      if (imageQuality === 'jt' && !/(?:^|[^a-z0-9])jt(?:$|[^a-z0-9])/i.test(name)) continue;
-      if (imageQuality === 'vip' && !/(?:^|[^a-z0-9])vip(?:$|[^a-z0-9])/i.test(name)) continue;
-      if (imageQuality === 'ornew' && !/OR(?:G)?\s*NEW/i.test(name)) continue;
+      if (/بطاريه|بطارية|battery/i.test(name)) continue;
 
-      const nameTokens = normalizeImageModel(name).split(' ').filter(Boolean);
-      const exactMatches = stemTokens.filter((token) =>
-        nameTokens.includes(token) ||
-        (token.length >= 4 && nameTokens.some((nameToken) => nameToken.startsWith(token)))
+      if (imageQuality === 'jt' && !/(?:^|[^a-z0-9])jt(?:$|[^a-z0-9])/i.test(name)) {
+        continue;
+      }
+      if (imageQuality === 'vip' && !/(?:^|[^a-z0-9])vip(?:$|[^a-z0-9])/i.test(name)) {
+        continue;
+      }
+      if (
+        imageQuality === 'ornew' &&
+        !/(?:^|[^a-z0-9])(?:or(?:g)?\s*new)(?:$|[^a-z0-9])/i.test(name)
+      ) {
+        continue;
+      }
+
+      const nameTokens = extractModelTokens(name);
+      if (nameTokens.length === 0) continue;
+
+      const matchedCount = stemTokens.filter((sTok) =>
+        nameTokens.some(
+          (nTok) =>
+            nTok === sTok ||
+            (sTok.length >= 3 && nTok.startsWith(sTok)) ||
+            (nTok.length >= 3 && sTok.startsWith(nTok))
+        )
       ).length;
-      if (exactMatches === stemTokens.length) {
-        candidates.push(name);
+
+      if (matchedCount === stemTokens.length) {
+        candidates.push({ name, score: matchedCount / nameTokens.length });
       }
     }
 
-    for (const name of candidates) {
-      if (!imageMap.has(name)) imageMap.set(name, `/lcd-images/${encodeURIComponent(imageFile)}`);
+    candidates.sort((a, b) => b.score - a.score);
+    for (const item of candidates) {
+      if (!imageMap.has(item.name)) {
+        imageMap.set(item.name, `/lcd-images/${encodeURIComponent(imageFile)}`);
+      }
     }
   }
-
-  imageMap.set(
-    'Lcd C51\\c53\\note 50 jt 100%',
-    '/lcd-images/C51%20C53%20jt.jpeg'
-  );
-  imageMap.set(
-    'Lcd Y33S OR NEW',
-    '/lcd-images/Y33s%20OR%20NEW.jpeg'
-  );
-  imageMap.set(
-    'Lcd C53 OR NEW',
-    '/lcd-images/C51%20C53%20OR%20NEW.jpeg'
-  );
-  imageMap.set(
-    'Lcd Y53S OR NEW',
-    '/lcd-images/Y33s%20Y53s%20OR%20NEW.jpeg'
-  );
 
   return imageMap;
 }
