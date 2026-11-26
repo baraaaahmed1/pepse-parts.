@@ -1,5 +1,33 @@
 {
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/server.js" }
+  "version": 2,
+  "builds": [
+    {
+      "src": "server.js",
+      "use": "@vercel/node",
+      "config": {
+        "includeFiles": [
+          "لسته كامله.xls.xlsx",
+          "pag2.html",
+          "products.html",
+          "admin.html",
+          "styles.css",
+          "script.js",
+          "products.js",
+          "admin.js",
+          "lcd-placeholder.svg",
+          "battery-placeholder.svg",
+          "instapay-icon.svg",
+          "wallet-icon.svg",
+          "WhatsApp Image 2026-10-11 at 2.39.20 PM.jpeg",
+          "lcd-images/**"
+        ]
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "server.js"
+    }
   ]
 }
