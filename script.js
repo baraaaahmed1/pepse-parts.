@@ -270,6 +270,12 @@ document.addEventListener('DOMContentLoaded', async function () {
       catalogCount.textContent = 'تعذر تحميل الأصناف.';
       catalogEmpty.textContent = 'تعذر تحميل الكتالوج الآن. حاول مرة أخرى لاحقًا.';
       catalogEmpty.hidden = false;
+      const retryButton = document.createElement('button');
+      retryButton.type = 'button';
+      retryButton.className = 'btn btn-primary';
+      retryButton.textContent = 'إعادة تحميل الكتالوج';
+      retryButton.addEventListener('click', () => window.location.reload());
+      catalogEmpty.append(document.createElement('br'), retryButton);
     }
   }
 
