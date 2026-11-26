@@ -6,7 +6,13 @@ const multer = require('multer');
 const ExcelJS = require('exceljs');
 const JSZip = require('jszip');
 const { get: getBlob, put: putBlob } = require('@vercel/blob');
-const { DatabaseSync } = require('node:sqlite');
+
+let DatabaseSync = null;
+try {
+  ({ DatabaseSync } = require('node:sqlite'));
+} catch (error) {
+  console.warn('node:sqlite is unavailable in this runtime; running without SQLite persistence.');
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -54,79 +60,17 @@ const EGYPT_GOVERNORATES = new Set([
   'البحر الأحمر',
 ]);
 let catalogByName = new Map();
+let catalogInitPromise = null;
 
-fs.mkdirSync(path.dirname(DATABASE_PATH), { recursive: true });
+let database = null;
+if (DatabaseSync) {
+  fs.mkdirSync(path.dirname(DATABASE_PATH), { recursive: true });
 
-const database = new DatabaseSync(DATABASE_PATH);
-database.exec(`
-  PRAGMA journal_mode = WAL;
-  PRAGMA busy_timeout = 5000;
-  CREATE TABLE IF NOT EXISTS orders (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    type TEXT NOT NULL CHECK (type IN ('catalog_order', 'contact')),
-    shop_name TEXT NOT NULL,
-    phone TEXT NOT NULL,
-    request_type TEXT,
-    details TEXT NOT NULL,
-    items_json TEXT NOT NULL DEFAULT '[]',
-    reference TEXT,
-    status TEXT NOT NULL DEFAULT 'new'
-      CHECK (status IN ('new', 'confirmed', 'shipped', 'cancelled')),
-    payment_method TEXT
-      CHECK (payment_method IN ('cash_on_delivery', 'instapay', 'wallet_transfer')),
-    fulfillment_method TEXT NOT NULL DEFAULT 'shipping'
-      CHECK (fulfillment_method IN ('shipping', 'pickup')),
-    shipping_company TEXT,
-    delivery_governorate TEXT,
-    delivery_address TEXT,
-    delivery_landmark TEXT,
-    payment_status TEXT NOT NULL DEFAULT 'unpaid'
-      CHECK (payment_status IN ('unpaid', 'paid')),
-    created_at TEXT NOT NULL
-  );
-  CREATE INDEX IF NOT EXISTS orders_created_at_idx ON orders(created_at DESC);
-`);
-const orderColumns = database.prepare('PRAGMA table_info(orders)').all();
-if (!orderColumns.some((column) => column.name === 'reference')) {
-  database.exec('ALTER TABLE orders ADD COLUMN reference TEXT');
-}
-if (!orderColumns.some((column) => column.name === 'payment_method')) {
-  database.exec('ALTER TABLE orders ADD COLUMN payment_method TEXT');
-}
-if (!orderColumns.some((column) => column.name === 'fulfillment_method')) {
+  database = new DatabaseSync(DATABASE_PATH);
   database.exec(`
-    ALTER TABLE orders ADD COLUMN fulfillment_method TEXT NOT NULL DEFAULT 'shipping'
-      CHECK (fulfillment_method IN ('shipping', 'pickup'))
-  `);
-}
-if (!orderColumns.some((column) => column.name === 'shipping_company')) {
-  database.exec('ALTER TABLE orders ADD COLUMN shipping_company TEXT');
-}
-if (!orderColumns.some((column) => column.name === 'delivery_governorate')) {
-  database.exec('ALTER TABLE orders ADD COLUMN delivery_governorate TEXT');
-}
-if (!orderColumns.some((column) => column.name === 'delivery_address')) {
-  database.exec('ALTER TABLE orders ADD COLUMN delivery_address TEXT');
-}
-if (!orderColumns.some((column) => column.name === 'delivery_landmark')) {
-  database.exec('ALTER TABLE orders ADD COLUMN delivery_landmark TEXT');
-}
-if (!orderColumns.some((column) => column.name === 'payment_status')) {
-  database.exec(`
-    ALTER TABLE orders ADD COLUMN payment_status TEXT NOT NULL DEFAULT 'unpaid'
-      CHECK (payment_status IN ('unpaid', 'paid'))
-  `);
-}
-const orderTableSql = database
-  .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'orders'")
-  .get().sql;
-const paymentMethodCheck = orderTableSql.match(/check\s*\(\s*payment_method\b[^)]*/i);
-if (paymentMethodCheck && !/wallet_transfer/i.test(paymentMethodCheck[0])) {
-  const previousSequence =
-    database.prepare("SELECT seq FROM sqlite_sequence WHERE name = 'orders'").get()?.seq || 0;
-  database.exec(`
-    BEGIN IMMEDIATE;
-    CREATE TABLE orders_new (
+    PRAGMA journal_mode = WAL;
+    PRAGMA busy_timeout = 5000;
+    CREATE TABLE IF NOT EXISTS orders (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       type TEXT NOT NULL CHECK (type IN ('catalog_order', 'contact')),
       shop_name TEXT NOT NULL,
@@ -149,30 +93,96 @@ if (paymentMethodCheck && !/wallet_transfer/i.test(paymentMethodCheck[0])) {
         CHECK (payment_status IN ('unpaid', 'paid')),
       created_at TEXT NOT NULL
     );
-    INSERT INTO orders_new (
-      id, type, shop_name, phone, request_type, details, items_json, reference, status,
-      payment_method, fulfillment_method, shipping_company, delivery_governorate,
-      delivery_address, delivery_landmark, payment_status, created_at
-    )
-    SELECT
-      id, type, shop_name, phone, request_type, details, items_json, reference, status,
-      payment_method, fulfillment_method, shipping_company, delivery_governorate,
-      delivery_address, delivery_landmark, payment_status, created_at
-    FROM orders;
-    DROP TABLE orders;
-    ALTER TABLE orders_new RENAME TO orders;
-    COMMIT;
+    CREATE INDEX IF NOT EXISTS orders_created_at_idx ON orders(created_at DESC);
   `);
-  const currentSequence = database
-    .prepare("SELECT seq FROM sqlite_sequence WHERE name = 'orders'")
-    .get()?.seq || 0;
-  if (previousSequence > currentSequence) {
-    database.prepare("UPDATE sqlite_sequence SET seq = ? WHERE name = 'orders'")
-      .run(previousSequence);
+  const orderColumns = database.prepare('PRAGMA table_info(orders)').all();
+  if (!orderColumns.some((column) => column.name === 'reference')) {
+    database.exec('ALTER TABLE orders ADD COLUMN reference TEXT');
   }
+  if (!orderColumns.some((column) => column.name === 'payment_method')) {
+    database.exec('ALTER TABLE orders ADD COLUMN payment_method TEXT');
+  }
+  if (!orderColumns.some((column) => column.name === 'fulfillment_method')) {
+    database.exec(`
+      ALTER TABLE orders ADD COLUMN fulfillment_method TEXT NOT NULL DEFAULT 'shipping'
+        CHECK (fulfillment_method IN ('shipping', 'pickup'))
+    `);
+  }
+  if (!orderColumns.some((column) => column.name === 'shipping_company')) {
+    database.exec('ALTER TABLE orders ADD COLUMN shipping_company TEXT');
+  }
+  if (!orderColumns.some((column) => column.name === 'delivery_governorate')) {
+    database.exec('ALTER TABLE orders ADD COLUMN delivery_governorate TEXT');
+  }
+  if (!orderColumns.some((column) => column.name === 'delivery_address')) {
+    database.exec('ALTER TABLE orders ADD COLUMN delivery_address TEXT');
+  }
+  if (!orderColumns.some((column) => column.name === 'delivery_landmark')) {
+    database.exec('ALTER TABLE orders ADD COLUMN delivery_landmark TEXT');
+  }
+  if (!orderColumns.some((column) => column.name === 'payment_status')) {
+    database.exec(`
+      ALTER TABLE orders ADD COLUMN payment_status TEXT NOT NULL DEFAULT 'unpaid'
+        CHECK (payment_status IN ('unpaid', 'paid'))
+    `);
+  }
+  const orderTableSql = database
+    .prepare("SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'orders'")
+    .get().sql;
+  const paymentMethodCheck = orderTableSql.match(/check\s*\(\s*payment_method\b[^)]*/i);
+  if (paymentMethodCheck && !/wallet_transfer/i.test(paymentMethodCheck[0])) {
+    const previousSequence =
+      database.prepare("SELECT seq FROM sqlite_sequence WHERE name = 'orders'").get()?.seq || 0;
+    database.exec(`
+      BEGIN IMMEDIATE;
+      CREATE TABLE orders_new (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        type TEXT NOT NULL CHECK (type IN ('catalog_order', 'contact')),
+        shop_name TEXT NOT NULL,
+        phone TEXT NOT NULL,
+        request_type TEXT,
+        details TEXT NOT NULL,
+        items_json TEXT NOT NULL DEFAULT '[]',
+        reference TEXT,
+        status TEXT NOT NULL DEFAULT 'new'
+          CHECK (status IN ('new', 'confirmed', 'shipped', 'cancelled')),
+        payment_method TEXT
+          CHECK (payment_method IN ('cash_on_delivery', 'instapay', 'wallet_transfer')),
+        fulfillment_method TEXT NOT NULL DEFAULT 'shipping'
+          CHECK (fulfillment_method IN ('shipping', 'pickup')),
+        shipping_company TEXT,
+        delivery_governorate TEXT,
+        delivery_address TEXT,
+        delivery_landmark TEXT,
+        payment_status TEXT NOT NULL DEFAULT 'unpaid'
+          CHECK (payment_status IN ('unpaid', 'paid')),
+        created_at TEXT NOT NULL
+      );
+      INSERT INTO orders_new (
+        id, type, shop_name, phone, request_type, details, items_json, reference, status,
+        payment_method, fulfillment_method, shipping_company, delivery_governorate,
+        delivery_address, delivery_landmark, payment_status, created_at
+      )
+      SELECT
+        id, type, shop_name, phone, request_type, details, items_json, reference, status,
+        payment_method, fulfillment_method, shipping_company, delivery_governorate,
+        delivery_address, delivery_landmark, payment_status, created_at
+      FROM orders;
+      DROP TABLE orders;
+      ALTER TABLE orders_new RENAME TO orders;
+      COMMIT;
+    `);
+    const currentSequence = database
+      .prepare("SELECT seq FROM sqlite_sequence WHERE name = 'orders'")
+      .get()?.seq || 0;
+    if (previousSequence > currentSequence) {
+      database.prepare("UPDATE sqlite_sequence SET seq = ? WHERE name = 'orders'")
+        .run(previousSequence);
+    }
+  }
+  database.exec('CREATE INDEX IF NOT EXISTS orders_created_at_idx ON orders(created_at DESC)');
+  database.exec('CREATE UNIQUE INDEX IF NOT EXISTS orders_reference_idx ON orders(reference)');
 }
-database.exec('CREATE INDEX IF NOT EXISTS orders_created_at_idx ON orders(created_at DESC)');
-database.exec('CREATE UNIQUE INDEX IF NOT EXISTS orders_reference_idx ON orders(reference)');
 
 app.use(express.json({ limit: '1mb' }));
 
@@ -478,7 +488,11 @@ async function getSharedCatalogBuffer() {
 
 async function refreshSharedCatalog() {
   const buffer = await getSharedCatalogBuffer();
-  if (buffer) await loadCatalog(buffer);
+  if (buffer) {
+    await loadCatalog(buffer);
+  } else if (catalogByName.size === 0) {
+    await ensureCatalogReady();
+  }
 }
 
 async function parseCatalog(buffer) {
@@ -665,6 +679,16 @@ async function loadCatalogWithLocalRecovery() {
 
     throw originalError;
   }
+}
+
+function ensureCatalogReady() {
+  if (!catalogInitPromise) {
+    catalogInitPromise = loadCatalogWithLocalRecovery().catch((error) => {
+      catalogInitPromise = null;
+      throw error;
+    });
+  }
+  return catalogInitPromise;
 }
 
 function makeWhatsAppUrl(message) {
@@ -916,47 +940,49 @@ app.post('/api/order', async (req, res) => {
   }
 
   try {
-    let orderId;
-    if (type === 'catalog_order') {
-      database.prepare(`
-        INSERT INTO orders (
-          type, shop_name, phone, request_type, details, items_json, reference,
-          payment_method, fulfillment_method, shipping_company, delivery_governorate,
-          delivery_address, delivery_landmark, payment_status, created_at
-        )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'unpaid', ?)
-        ON CONFLICT(reference) DO NOTHING
-      `).run(
-        type,
-        shopName,
-        phone,
-        requestType,
-        details,
-        JSON.stringify(items),
-        body.reference,
-        paymentMethod,
-        fulfillmentMethod,
-        shippingCompany,
-        deliveryGovernorate,
-        deliveryAddress,
-        deliveryLandmark || null,
-        new Date().toISOString()
-      );
-      orderId = database.prepare('SELECT id FROM orders WHERE reference = ?').get(body.reference).id;
-    } else {
-      const result = database.prepare(`
-        INSERT INTO orders (type, shop_name, phone, request_type, details, items_json, created_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        type,
-        shopName,
-        phone,
-        requestType,
-        details,
-        JSON.stringify(items),
-        new Date().toISOString()
-      );
-      orderId = Number(result.lastInsertRowid);
+    let orderId = Date.now();
+    if (database) {
+      if (type === 'catalog_order') {
+        database.prepare(`
+          INSERT INTO orders (
+            type, shop_name, phone, request_type, details, items_json, reference,
+            payment_method, fulfillment_method, shipping_company, delivery_governorate,
+            delivery_address, delivery_landmark, payment_status, created_at
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'unpaid', ?)
+          ON CONFLICT(reference) DO NOTHING
+        `).run(
+          type,
+          shopName,
+          phone,
+          requestType,
+          details,
+          JSON.stringify(items),
+          body.reference,
+          paymentMethod,
+          fulfillmentMethod,
+          shippingCompany,
+          deliveryGovernorate,
+          deliveryAddress,
+          deliveryLandmark || null,
+          new Date().toISOString()
+        );
+        orderId = database.prepare('SELECT id FROM orders WHERE reference = ?').get(body.reference).id;
+      } else {
+        const result = database.prepare(`
+          INSERT INTO orders (type, shop_name, phone, request_type, details, items_json, created_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          type,
+          shopName,
+          phone,
+          requestType,
+          details,
+          JSON.stringify(items),
+          new Date().toISOString()
+        );
+        orderId = Number(result.lastInsertRowid);
+      }
     }
 
     const message = type === 'catalog_order'
@@ -1014,6 +1040,9 @@ app.post('/api/order', async (req, res) => {
 });
 
 app.get('/api/admin/orders', requireAdmin, (req, res) => {
+  if (!database) {
+    return res.json({ success: true, orders: [] });
+  }
   try {
     const rows = database.prepare(`
       SELECT id, type, shop_name, phone, request_type, details, items_json, reference, status,
@@ -1127,6 +1156,9 @@ app.use((error, req, res, next) => {
 });
 
 app.patch('/api/admin/orders/:id', requireAdmin, (req, res) => {
+  if (!database) {
+    return res.status(503).json({ success: false, error: 'قاعدة بيانات الطلبات غير متاحة.' });
+  }
   const orderId = Number(req.params.id);
   const body = req.body || {};
   const updates = [];
@@ -1220,7 +1252,7 @@ app.get('*', (req, res) => {
 });
 
 async function startServer() {
-  await loadCatalogWithLocalRecovery();
+  await ensureCatalogReady();
   app.listen(PORT, () => {
     if (!process.env.ADMIN_PASSWORD) {
       console.warn('Set ADMIN_PASSWORD to enable the orders dashboard at /admin.');
@@ -1231,8 +1263,12 @@ async function startServer() {
   });
 }
 
-startServer().catch((error) => {
-  console.error('The catalog could not be loaded:', error);
-  database.close();
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  startServer().catch((error) => {
+    console.error('The catalog could not be loaded:', error);
+    if (database) database.close();
+    process.exitCode = 1;
+  });
+}
+
+module.exports = app;
